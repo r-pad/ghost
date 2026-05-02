@@ -1,0 +1,10 @@
+{
+  "cam_azure_kinect_front": {
+    "intrinsics": "droid_calibration/intrinsics_front.txt",
+    "extrinsics": "droid_calibration/T_world_from_camera_front.txt"
+  },
+  "cam_azure_kinect_left": {
+    "intrinsics": "droid_calibration/intrinsics_left.txt",
+    "extrinsics": "droid_calibration/T_world_from_camera_left.txt"
+  }
+}
