@@ -15,9 +15,9 @@ cameras:
   - name: cam_azure_kinect_front
     color_key: "observation.images.cam_azure_kinect_front.color"
     depth_key: "observation.images.cam_azure_kinect_front.transformed_depth"
-  - name: cam_azure_kinect_back
-    color_key: "observation.images.cam_azure_kinect_back.color"
-    depth_key: "observation.images.cam_azure_kinect_back.transformed_depth"
+  - name: cam_azure_kinect_left
+    color_key: "observation.images.cam_azure_kinect_left.color"
+    depth_key: "observation.images.cam_azure_kinect_left.transformed_depth"
 
 gripper_pcd_key: "observation.points.gripper_pcds"
 
