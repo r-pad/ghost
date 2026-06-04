@@ -1,8 +1,0 @@
-name: multi
-
-defaults:
-  - droid@datasets.droid
-  - rpadFoxglove@datasets.rpadFoxglove
-
-data_dir: null
-max_depth: 1

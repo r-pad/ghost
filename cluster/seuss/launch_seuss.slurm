@@ -17,7 +17,7 @@ module load singularity
 
 # Env variables.
 dockerhub_username=$DOCKERHUB_USERNAME
-project_name=lfd3d
+project_name=ghost
 
 # Get the branch name.
 root_dir=$HOME/code/${project_name}
@@ -37,7 +37,7 @@ echo "Using SIF name: ${sif_name}"
 
 mkdir -p /scratch/rpad/logs
 
-SINGULARITYENV_WANDB_DOCKER_IMAGE=lfd3d \
+SINGULARITYENV_WANDB_DOCKER_IMAGE=ghost \
     SINGULARITYENV_WANDB_API_KEY=$WANDB_API_KEY \
     singularity exec \
     --nv \

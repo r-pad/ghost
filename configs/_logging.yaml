@@ -21,7 +21,7 @@ lightning:
 
 wandb:
   entity: r-pad
-  project: lfd3d
+  project: ghost
 
   # Group is for grouping runs together (i.e. a train run and an eval run).
   group: ???

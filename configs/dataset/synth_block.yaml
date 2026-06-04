@@ -1,3 +1,0 @@
-defaults:
-  - base_dataset # Inherit from base
-name: synth_block

@@ -10,7 +10,7 @@ set -e
 
 # Set some variables.
 dockerhub_username=$DOCKERHUB_USERNAME
-project_name=lfd3d
+project_name=ghost
 
 # Get paths.
 script_path=$(realpath $0)

@@ -1,13 +1,14 @@
 [project]
-name = "lfd3d"
+name = "ghost"
 version = "0.1.0"
-description = "A Python Package Template"
+description = "GHOST: Hierarchical Sub-Goal Policies for Generalizing Robot Manipulation"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE.txt" }
 authors = [
-    { email = "baeisner@andrew.cmu.edu", name = "Ben Eisner" },
     { email = "sskrishn@andrew.cmu.edu", name = "Sriram Krishna" },
+    { email = "baeisner@andrew.cmu.edu", name = "Ben Eisner" },
+    { email = "hzhan2@andrew.cmu.edu", name = "Haotian Zhan" },
 ]
 dependencies = [
     "diffusers>=0.26.3",
@@ -47,8 +48,6 @@ develop = [
     "pre-commit==3.3.3",
     "basedpyright",
 ]
-notebooks = ["jupyter"]
-docs = ["mkdocs-material", "mkdocstrings[python]"]
 
 [build-system]
 requires = ["setuptools", "setuptools-scm", "wheel"]
@@ -58,12 +57,17 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-lfd3d = ["py.typed"]
+ghost = ["py.typed"]
 
 # Pixi-specific configuration
 [tool.pixi.project]
 channels = ["pytorch", "nvidia/label/cuda-12.4.0", "conda-forge"]
 platforms = ["linux-64"]
+
+# Environment variables set on environment activation (e.g. pixi install/run/shell).
+# GIT_LFS_SKIP_SMUDGE avoids LeRobot git-LFS install errors.
+[tool.pixi.activation.env]
+GIT_LFS_SKIP_SMUDGE = "1"
 
 [tool.pixi.system-requirements]
 libc = { family = "glibc", version = "2.31" }
@@ -81,7 +85,7 @@ ffmpeg = ">=6,<8"
 
 # PyPI-specific dependencies
 [tool.pixi.pypi-dependencies]
-lfd3d = { path = ".", editable = true }
+ghost = { path = ".", editable = true }
 torch = { version = "==2.6.0", index = "https://download.pytorch.org/whl/cu124" }
 torchvision = { version = "==0.21.0", index = "https://download.pytorch.org/whl/cu124" }
 timm = "==0.9.12"
@@ -125,11 +129,7 @@ test-cuda = "python -c 'import torch; print(torch.cuda.is_available())'"
 
 # Environments
 [tool.pixi.environments]
-default = { features = [
-    "develop",
-    "notebooks",
-    "docs",
-], solve-group = "default" }
+default = { features = ["develop"], solve-group = "default" }
 
 [tool.ruff]
 # Enable Pyflakes ('F'), pycodestyle ('E'), isort ('I')
