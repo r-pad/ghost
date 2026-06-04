@@ -19,7 +19,6 @@ export CFLAGS="-DHAVE_LINUX_INPUT_H"
 
 pixi install
 pixi run install-deps
-pixi run setup-pre-commit
 pixi shell
 ```
 
@@ -27,22 +26,7 @@ Download the [MANO models](https://mano.is.tue.mpg.de/) and place them in `mano/
 
 ## Data preparation
 
-### Mujoco calibration
-
-- The default path to a MuJoCo robot model is `~/.cache/robot_descriptions/mujoco_menagerie/{ROBOT}` (e.g. `.../aloha`).
-- Copy the robot directory from that cache into the local `robot_descriptions/` folder.
-- Edit the robot description XML (e.g. `aloha.xml`) to match your real-world robot's geometry, joint limits, and transforms — for example, adjust `"left/base_link"` and `"right/base_link"` to match your setup.
-
-### DROID
-
-- GT gripper trajectory: rendered with MuJoCo in `src/ghost/datasets/droid/render_robotiq.py`.
-- Sub-goal generation: with Gemini in `src/ghost/datasets/droid/chunk_droid_with_gemini.py`.
-- RGB/text features: `python rgb_text_feature_gen.py --dataset droid --input_dir </path/to/droid/data>`.
-- Disparity: with [sriramsk1999/FoundationStereo](https://github.com/sriramsk1999/FoundationStereo/).
-
-### RPAD-LeRobot
-
-- With your collected LeRobot dataset, run `upgrade_dataset.py` from the LeRobot repo to generate a `[repo_id]_goal` repo.
+This repo depends on data collected from the [r-pad/lerobot](https://github.com/r-pad/lerobot/) repo, stored as a `LeRobotDataset` and postprocessed with `upgrade_dataset.py` (from that repo) to produce a goal-conditioned dataset for training.
 
 ## Training
 
@@ -50,23 +34,15 @@ Train the high-level sub-goal policy (GHOST uses the `dino_3dgp` model):
 
 ```bash
 python scripts/train.py model=dino_3dgp dataset=rpadLerobot \
-    dataset.repo_id=<your/lerobot_repo_goal> \
-    dataset.data_sources="[aloha]" \
+    dataset.repo_id='["sriramsk/fold_onesie_human_MV_20260119_ss_hg"]' \
     dataset.cache_dir=/path/to/cache \
-    resources.num_workers=16
+    resources.num_workers=32 \
+    training.check_val_every_n_epochs=3
 ```
 
-Training on multiple folding tasks at once:
+> **Note:** The first epoch is typically slow because each sample is processed and cached to `dataset.cache_dir`. Later epochs — and any reruns pointing at the same `cache_dir` — are much faster.
 
-```bash
-python scripts/train.py model=dino_3dgp dataset=rpadLerobot \
-    dataset.repo_id="[sriramsk/fold_onesie_..._heatmapGoal, sriramsk/fold_shirt_..._heatmapGoal]" \
-    dataset.cache_dir=/path/to/cache \
-    resources.num_workers=32 training.batch_size=128 \
-    training.epochs=500 training.check_val_every_n_epochs=5
-```
-
-`mimicplay` and `articubot` are also available as `model=...`. Set `dataset.cache_dir` to reuse processed data across runs.
+Pass multiple repos in the `dataset.repo_id` list to train on several tasks at once. `model=mimicplay` and `model=articubot` are also available.
 
 The best checkpoint is uploaded to WandB at the end of training. To upload an intermediate checkpoint stored in `logs/`:
 
@@ -90,6 +66,16 @@ python scripts/eval_lerobot_episode.py checkpoint.run_id=<wandb-run-id> \
     dataset=rpadLerobot dataset.repo_id="[<your/lerobot_repo_goal>]" \
     model=dino_heatmap checkpoint.type=pix_dist
 ```
+
+
+<details>
+<summary><b>MuJoCo calibration</b> (only needed for rendering robot-gripper trajectories)</summary>
+
+- The default path to a MuJoCo robot model is `~/.cache/robot_descriptions/mujoco_menagerie/{ROBOT}` (e.g. `.../aloha`).
+- Copy the robot directory from that cache into the local `robot_descriptions/` folder.
+- Edit the robot description XML (e.g. `aloha.xml`) to match your real-world robot's geometry, joint limits, and transforms — for example, adjust `"left/base_link"` and `"right/base_link"` to match your setup.
+
+</details>
 
 ## Citation
 
