@@ -7,7 +7,7 @@ import pytorch_lightning as pl
 import torch
 import wandb
 from hydra.core.hydra_config import HydraConfig
-from lfd3d.utils.script_utils import (
+from ghost.utils.script_utils import (
     create_datamodule,
     create_model,
     load_checkpoint_config_from_wandb,
@@ -137,7 +137,7 @@ def main(cfg):
     ######################################################################
 
     # Upload output to wandb
-    wandb.init(entity="r-pad", project="lfd3d", id=cfg.checkpoint.run_id, resume="must")
+    wandb.init(entity="r-pad", project="ghost", id=cfg.checkpoint.run_id, resume="must")
 
     eval_datamodule = get_eval_datamodule(datamodule, cfg.inference)
     preds = trainer.predict(model, datamodule=eval_datamodule)

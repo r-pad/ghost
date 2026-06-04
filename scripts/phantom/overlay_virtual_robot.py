@@ -57,7 +57,7 @@ def parse_args():
     parser.add_argument(
         "--calib_json",
         type=str,
-        default="../../src/lfd3d/datasets/aloha_calibration/multiview_calib.json",
+        default="../../src/ghost/datasets/aloha_calibration/multiview_calib.json",
         help="Path to calibration JSON with camera configurations",
     )
     return parser.parse_args()

@@ -2,7 +2,7 @@
 # This script is for manually uploading a checkpoint during the run
 # or if the run crashes in between, so that we can evaluate with the checkpoint
 #
-# Example usage: python script.py --run_id o0aiolj1 --checkpoint_path /home/sriram/Desktop/lfd3d/logs/train_hoi4d/2024-11-10/23-38-49/checkpoints/epoch=1289-step=167700-val/rmse=0.117.ckpt
+# Example usage: python script.py --run_id o0aiolj1 --checkpoint_path /home/sriram/Desktop/ghost/logs/train_hoi4d/2024-11-10/23-38-49/checkpoints/epoch=1289-step=167700-val/rmse=0.117.ckpt
 
 import argparse
 
@@ -31,7 +31,7 @@ parser.add_argument(
 parser.add_argument(
     "--project",
     type=str,
-    default="lfd3d",
+    default="ghost",
     help="Name of project (e.g. rmse, rmse_and_std_combi)",
 )
 

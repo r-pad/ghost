@@ -8,7 +8,7 @@ import imageio.v3 as iio
 import mink
 import mujoco
 import numpy as np
-from lfd3d.utils.viz_utils import (
+from ghost.utils.viz_utils import (
     annotate_video,
     plot_barchart_with_error,
 )
@@ -41,7 +41,7 @@ def parse_args():
     parser.add_argument(
         "--calib_json",
         type=str,
-        default="../../src/lfd3d/datasets/aloha_calibration/multiview_calib.json",
+        default="../../src/ghost/datasets/aloha_calibration/multiview_calib.json",
         help="Path to calibration JSON with camera configurations",
     )
     parser.add_argument(

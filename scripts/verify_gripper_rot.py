@@ -1,6 +1,6 @@
 import numpy as np
 import open3d as o3d
-from lfd3d.datasets.lerobot.lerobot_dataset import RpadLeRobotDataset
+from ghost.datasets.lerobot.lerobot_dataset import RpadLeRobotDataset
 from omegaconf import OmegaConf
 
 cfg_dict = {
@@ -72,7 +72,7 @@ cfg_dict = {
     "lightning": {"checkpoint_dir": "${output_dir}/checkpoints"},
     "wandb": {
         "entity": "r-pad",
-        "project": "lfd3d",
+        "project": "ghost",
         "group": None,
         "save_dir": "${output_dir}",
         "artifact_dir": "${hydra:runtime.cwd}/wandb_artifacts",

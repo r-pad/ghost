@@ -6,7 +6,7 @@ import mujoco
 import numpy as np
 import open3d as o3d
 import torch
-from lfd3d.utils.viz_utils import plot_seq_data
+from ghost.utils.viz_utils import plot_seq_data
 from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
 from scipy.spatial.transform import Rotation as R

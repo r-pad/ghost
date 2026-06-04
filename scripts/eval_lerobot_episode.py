@@ -11,12 +11,12 @@ import pytorch_lightning as pl
 import torch
 import wandb
 from hydra.core.hydra_config import HydraConfig
-from lfd3d.utils.script_utils import (
+from ghost.utils.script_utils import (
     create_datamodule,
     create_model,
     load_checkpoint_config_from_wandb,
 )
-from lfd3d.utils.viz_utils import (
+from ghost.utils.viz_utils import (
     generate_heatmap_from_points,
     get_heatmap_viz,
     save_video,
@@ -157,7 +157,7 @@ def main(cfg):
     # Upload output to wandb
     wandb.init(
         entity="r-pad",
-        project="lfd3d",
+        project="ghost",
         id=cfg.checkpoint.run_id,
         resume="must",
     )

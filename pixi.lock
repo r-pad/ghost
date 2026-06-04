@@ -1968,7 +1968,7 @@ packages:
 - pypi: .
   name: ghost
   version: 0.1.0
-  sha256: 93a7fe176e9ef62e540a4e00e569803da55154c602e7cb73338f71bc163b9437
+  sha256: fd9774a04feb58c340ad6b3675564c9f103e64ec1f1cd7049d85a7a2913009e2
   requires_dist:
   - diffusers>=0.26.3
   - gif

@@ -5,8 +5,8 @@ import omegaconf
 import pytorch_lightning as pl
 import torch
 import wandb
-from lfd3d.utils.lora_utils import apply_lora
-from lfd3d.utils.script_utils import (
+from ghost.utils.lora_utils import apply_lora
+from ghost.utils.script_utils import (
     PROJECT_ROOT,
     ModelCheckpointExplicit,
     create_datamodule,
@@ -82,7 +82,7 @@ def main(cfg):
     # and eval can be the same.
     #
     # If it's a custom network, a good idea is to put the custom network
-    # in `lfd3d.nets.my_net`.
+    # in `ghost.nets.my_net`.
     ######################################################################
 
     # Model architecture is dataset-dependent, so we have a helper
@@ -129,10 +129,6 @@ def main(cfg):
     # logging the results.
     ######################################################################
 
-    # For multi-dataset training, we define our own distributed sampler
-    # to handle issues described in src/lfd3d/datasets/multi_dataset.py
-    use_distributed_sampler = False if cfg.dataset.name == "multi" else True
-
     trainer = pl.Trainer(
         accelerator="gpu",
         devices=cfg.resources.gpus,
@@ -141,7 +137,6 @@ def main(cfg):
         logger=logger,
         check_val_every_n_epoch=cfg.training.check_val_every_n_epochs,
         gradient_clip_val=cfg.training.grad_clip_norm,
-        use_distributed_sampler=use_distributed_sampler,
         callbacks=create_checkpoint_callbacks(cfg, logger.experiment.id),
         num_sanity_val_steps=0,
     )
