@@ -15,6 +15,7 @@ from pytorch3d.transforms import (
     matrix_to_rotation_6d,
     rotation_6d_to_matrix,
 )
+from pytorch_lightning.utilities import rank_zero_warn
 from torch import nn, optim
 from transformers import AutoImageProcessor, AutoModel, T5EncoderModel, T5Tokenizer
 
@@ -498,6 +499,10 @@ class Dino3DGPGoalRegressionModule(pl.LightningModule):
             list
         )
 
+        # Number of optimizer steps dropped for non-finite gradients (see
+        # on_before_optimizer_step). Stays 0 on a healthy run.
+        self.nan_grad_steps = 0
+
         self.fixed_variance = cfg.model.fixed_variance
         self.uniform_weights_coeff = cfg.model.uniform_weights_coeff
         self.is_gmm = cfg.model.is_gmm
@@ -539,6 +544,31 @@ class Dino3DGPGoalRegressionModule(pl.LightningModule):
         self.batch_size = self.run_cfg.batch_size
         self.val_batch_size = self.run_cfg.val_batch_size
         self.max_depth = cfg.dataset.max_depth
+
+    def on_before_optimizer_step(self, optimizer):
+        """Drop an update whose gradients are non-finite instead of poisoning the run.
+
+        Runs after DDP has all-reduced and before gradient clipping. A NaN gradient
+        anywhere is a NaN on every rank after the allreduce, so all ranks take this
+        branch together and stay in sync -- and clipping never gets to turn a single
+        NaN into a NaN-valued total norm that scales *every* gradient to NaN.
+        """
+        grads = [p.grad for p in self.parameters() if p.grad is not None]
+        if not grads:
+            return
+
+        finite = torch.stack([torch.isfinite(g).all() for g in grads]).all()
+        if finite:
+            return
+
+        self.nan_grad_steps += 1
+        for g in grads:
+            g.zero_()
+        rank_zero_warn(
+            f"Non-finite gradients at global step {self.global_step}; skipping this "
+            f"update ({self.nan_grad_steps} skipped so far). Persistent skips mean "
+            "the model or a batch is producing NaN -- do not trust the run."
+        )
 
     def configure_optimizers(self):
         assert self.mode == "train", "Can only configure optimizers in training mode."
@@ -695,7 +725,7 @@ class Dino3DGPGoalRegressionModule(pl.LightningModule):
     def gripper_points_to_rotation(self, gripper_center, palm_point, finger_point):
         # Always use palm->gripper as primary axis (more stable)
         forward = gripper_center - palm_point
-        x_axis = forward / torch.linalg.norm(forward, dim=1, keepdim=True)
+        x_axis = F.normalize(forward, dim=1, eps=1e-8)
 
         # Use finger relative to the forward direction for secondary axis
         finger_vec = gripper_center - finger_point
@@ -704,12 +734,23 @@ class Dino3DGPGoalRegressionModule(pl.LightningModule):
         finger_projected = (
             finger_vec - torch.sum(finger_vec * x_axis, dim=1, keepdim=True) * x_axis
         )
-        y_axis = finger_projected / torch.linalg.norm(
-            finger_projected, dim=1, keepdim=True
-        )
 
-        # Z completes the frame
-        z_axis = torch.cross(x_axis, y_axis)
+        # A fully closed gripper puts both fingertips on the same point, so
+        # finger_projected collapses to zero and normalizing it would be 0/0 = NaN.
+        # One such frame NaNs the loss, and DDP's allreduce plus gradient clipping
+        # then spread NaN to every parameter on every rank. Fall back to the world
+        # axis least aligned with x_axis; y is arbitrary in that case anyway.
+        degenerate = torch.linalg.norm(finger_projected, dim=1, keepdim=True) < 1e-6
+        eye = torch.eye(3, device=x_axis.device, dtype=x_axis.dtype)
+        alt = eye[x_axis.abs().argmin(dim=1)]  # (B, 3)
+        alt_projected = alt - torch.sum(alt * x_axis, dim=1, keepdim=True) * x_axis
+        finger_projected = torch.where(degenerate, alt_projected, finger_projected)
+
+        y_axis = F.normalize(finger_projected, dim=1, eps=1e-8)
+
+        # Z completes the frame. dim is explicit: torch.cross picks the first size-3
+        # dim, which silently means dim=0 when the batch size happens to be 3.
+        z_axis = torch.linalg.cross(x_axis, y_axis, dim=1)
 
         return torch.stack([x_axis, y_axis, z_axis], dim=-1)
 
@@ -753,7 +794,9 @@ class Dino3DGPGoalRegressionModule(pl.LightningModule):
             [primary_depth.unsqueeze(1), aux_depths], dim=1
         )  # (B, N, H, W)
 
-        # Clip depths
+        # Clip depths. nan_to_num first: NaN compares False against everything, so a
+        # NaN depth would slip past the threshold below and poison the patch coords.
+        all_depths = torch.nan_to_num(all_depths, nan=0.0, posinf=0.0, neginf=0.0)
         all_depths[all_depths > self.max_depth] = 0
 
         # Permute RGB to (B, N, 3, H, W)
@@ -1158,6 +1201,23 @@ class Dino3DGPGoalRegressionModule(pl.LightningModule):
 
         # Softmax weights
         weights = F.softmax(weights, dim=1)
+
+        # torch.multinomial asserts device-side on non-finite/negative weights, which
+        # SIGABRTs the process and takes every rank down with it -- unrecoverable, and
+        # it surfaces up to 100 steps after the NaN actually appeared. Sanitize to a
+        # uniform fallback and warn loudly instead, so the run stays debuggable.
+        weights = torch.nan_to_num(weights, nan=0.0, posinf=0.0, neginf=0.0).clamp(
+            min=0
+        )
+        degenerate = weights.sum(dim=1, keepdim=True) <= 0
+        if degenerate.any():
+            rank_zero_warn(
+                f"sample_from_gmm: {int(degenerate.sum())}/{B} samples had "
+                "non-finite GMM weights at global step "
+                f"{getattr(self, 'global_step', -1)}; falling back to uniform "
+                "sampling. The network is producing NaN -- check the inputs."
+            )
+            weights = torch.where(degenerate, torch.ones_like(weights), weights)
 
         # Sample component indices
         sampled_indices = torch.multinomial(weights, num_samples=1)  # (B, 1)
