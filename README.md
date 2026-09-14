@@ -73,6 +73,8 @@ python scripts/train.py model=articubot dataset=liberoLerobot dataset.repo_id=sr
 nohup python scripts/train.py model=dino_3dgp dataset=rpadLerobot dataset.repo_id="[sriramsk/fold_onesie_20250831_subsampled_heatmapGoal, sriramsk/fold_shirt_20250918_subsampled_heatmapGoal, sriramsk/fold_towel_20250919_subsampled_heatmapGoal, sriramsk/fold_bottoms_20250919_human_heatmapGoal]"  resources.num_workers=32 training.batch_size=128 dataset.cache_dir=/home/sriram/Desktop/lfd3d/dino_3dgp_multifold_cache training.epochs=500 training.check_val_every_n_epochs=5 > dino_3dgp_multifold.out &
 ```
 
+### H2Rbench
+
 #### 1–2. Robot and human data processing (in `lerobot`)
 
 Building the robot and human `_hg` datasets happens in [r-pad/lerobot](https://github.com/r-pad/lerobot). See the "Training GHOST for H2R Benchmark" section of its README.
