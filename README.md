@@ -73,6 +73,24 @@ python scripts/train.py model=articubot dataset=liberoLerobot dataset.repo_id=sr
 nohup python scripts/train.py model=dino_3dgp dataset=rpadLerobot dataset.repo_id="[sriramsk/fold_onesie_20250831_subsampled_heatmapGoal, sriramsk/fold_shirt_20250918_subsampled_heatmapGoal, sriramsk/fold_towel_20250919_subsampled_heatmapGoal, sriramsk/fold_bottoms_20250919_human_heatmapGoal]"  resources.num_workers=32 training.batch_size=128 dataset.cache_dir=/home/sriram/Desktop/lfd3d/dino_3dgp_multifold_cache training.epochs=500 training.check_val_every_n_epochs=5 > dino_3dgp_multifold.out &
 ```
 
+#### 1–2. Robot and human data processing (in `lerobot`)
+
+Building the robot and human `_hg` datasets happens in [r-pad/lerobot](https://github.com/r-pad/lerobot). See the "Training GHOST for H2R Benchmark" section of its README.
+
+#### 3. High-level training (in `lfd3d`)
+
+Pass a list of robot and/or human `_hg` datasets:
+```bash
+HF_HOME=<hf_home> torchrun --nproc_per_node=1 scripts/train.py model=dino_3dgp dataset=rpadLerobot \
+  dataset.repo_id='["<user>/pick_place_red_mug_5_simrobot","<user>/pick_red_mug_human_ss_hg_40"]' \
+  dataset.cache_dir=<cache_dir> resources.num_workers=32 resources.gpus=-1 training.batch_size=32 \
+  training.check_val_every_n_epochs=3 wandb.entity=<entity> wandb.project=lfd3d wandb.name=<run_name>
+```
+
+#### 4. Low-level training (in `lerobot`)
+
+The low-level goal-conditioned diffusion policy is trained in [r-pad/lerobot](https://github.com/r-pad/lerobot). Pass the W&B run ID of the high-level model from step 3 as `--policy.hl_run_id`. The full command is in the "Training GHOST for H2R Benchmark" section of the lerobot README.
+
 ### RT-1
 
 **NOTE:** This section needs to be updated, rgb features should come from dinov2, set up gripper centric preds
